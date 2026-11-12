@@ -1,0 +1,51 @@
+{
+  "status": "passed",
+  "split_id": "5445dbd361f26a5fcdc2e1a6eeda1a2d1387942264957eb9e17844ff9163d550",
+  "n_patients": 248,
+  "n_labelled_predictions": 12697,
+  "folds": [
+    {
+      "fold": 0,
+      "train_rows": 9928,
+      "valid_rows": 2769,
+      "feature_columns": 1202
+    },
+    {
+      "fold": 1,
+      "train_rows": 10109,
+      "valid_rows": 2588,
+      "feature_columns": 1202
+    },
+    {
+      "fold": 2,
+      "train_rows": 10113,
+      "valid_rows": 2584,
+      "feature_columns": 1202
+    },
+    {
+      "fold": 3,
+      "train_rows": 10346,
+      "valid_rows": 2351,
+      "feature_columns": 1202
+    },
+    {
+      "fold": 4,
+      "train_rows": 10292,
+      "valid_rows": 2405,
+      "feature_columns": 1202
+    }
+  ],
+  "example_request_count": 64,
+  "example_visits_without_omics": 2,
+  "checks": [
+    "input/output hashes",
+    "patient isolation",
+    "training-only vocabulary",
+    "no clinical labels in features",
+    "feature/label alignment",
+    "identity score with shuffled IDs",
+    "Kaggle example request IDs",
+    "missing omics preserved"
+  ],
+  "note": "Infrastructure checks only; no model was trained and no CV performance is claimed."
+}

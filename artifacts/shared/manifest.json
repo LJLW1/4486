@@ -1,0 +1,38 @@
+{
+  "protocol": "patient5-omics-smape1-v1",
+  "seed": 4486,
+  "n_splits": 5,
+  "targets": [
+    "updrs_1",
+    "updrs_2",
+    "updrs_3",
+    "updrs_4"
+  ],
+  "horizons": [
+    0,
+    6,
+    12,
+    24
+  ],
+  "raw_sha256": {
+    "train_clinical_data.csv": "0897237a7c943f6afda9e083cf534eb0b506e5e00ffedad9bdc0c69248b86722",
+    "train_proteins.csv": "e6ec158bf3013338989806897276485ab930787d691f1eb1863c8da18e56f32d",
+    "train_peptides.csv": "3d1eba59f7def39fef4793a6e120e3ec84ab27c8911ae343fdcbf30a7324e301",
+    "supplemental_clinical_data.csv": "c55db4a4a5ce31188621c96f02a6f81bc2861fd5d20b773ff8270efb9a4e7905"
+  },
+  "split_id": "5445dbd361f26a5fcdc2e1a6eeda1a2d1387942264957eb9e17844ff9163d550",
+  "n_samples": 12697,
+  "n_patients": 248,
+  "environment": {
+    "python": "3.9.13",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "filelock": "3.19.1"
+  },
+  "output_sha256": {
+    "samples.csv": "0dd25d0603f9cd7405287e4690791272164e75c1ec4e23633846fd2cff9580f9",
+    "patient_folds.csv": "86f9d454bd982c479e6a51b551a4920a579f81af2ddbdd48591c37fd55f1aa26",
+    "fold_summary.csv": "433aa5ff0d18a2a9f0e8121231a01e169d814c544cf1fe999ec68fc6bfd689cd"
+  }
+}
