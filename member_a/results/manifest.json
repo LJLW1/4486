@@ -1,0 +1,74 @@
+{
+  "split_id": "5445dbd361f26a5fcdc2e1a6eeda1a2d1387942264957eb9e17844ff9163d550",
+  "seed": 4486,
+  "n_requests": 12697,
+  "primary_score": "mean_score",
+  "shared_frozen_hashes": {
+    "samples.csv": "0dd25d0603f9cd7405287e4690791272164e75c1ec4e23633846fd2cff9580f9",
+    "patient_folds.csv": "86f9d454bd982c479e6a51b551a4920a579f81af2ddbdd48591c37fd55f1aa26",
+    "fold_summary.csv": "433aa5ff0d18a2a9f0e8121231a01e169d814c544cf1fe999ec68fc6bfd689cd"
+  },
+  "shared_checks": [
+    {
+      "fold": 0,
+      "valid_patients": 50,
+      "patient_intersection": 0,
+      "validation_request_count": 2769
+    },
+    {
+      "fold": 1,
+      "valid_patients": 50,
+      "patient_intersection": 0,
+      "validation_request_count": 2588
+    },
+    {
+      "fold": 2,
+      "valid_patients": 50,
+      "patient_intersection": 0,
+      "validation_request_count": 2584
+    },
+    {
+      "fold": 3,
+      "valid_patients": 49,
+      "patient_intersection": 0,
+      "validation_request_count": 2351
+    },
+    {
+      "fold": 4,
+      "valid_patients": 49,
+      "patient_intersection": 0,
+      "validation_request_count": 2405
+    }
+  ],
+  "sources": {
+    "__init__.py": "d200e156f01c2d66559fb9fd611fe50fcfb9b06f10b3797a0b1d3293e983cf29",
+    "features.py": "ac45f3689340e39f1d95d9cbecf60efa73ae9e0ef53837dca7287f85e76b1796",
+    "run.py": "0b3d3847567a561879a18061f371e06c40f6d68edacb73873fde17a3d5119b96"
+  },
+  "model": {
+    "loss": "absolute_error",
+    "learning_rate": 0.05,
+    "max_iter": 120,
+    "max_leaf_nodes": 7,
+    "max_depth": 3,
+    "min_samples_leaf": 20,
+    "l2_regularization": 5.0,
+    "early_stopping": false,
+    "random_state": 4486
+  },
+  "environment": {
+    "python": "3.11.15",
+    "machine": "arm64",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "filelock": "3.19.1",
+    "matplotlib": "3.9.4",
+    "scipy": "1.13.1",
+    "joblib": "1.5.3",
+    "threadpoolctl": "3.6.0"
+  },
+  "runtime_definition": "Per-configuration measured fit, prediction and model-save time; common interface and feature construction excluded and recorded per fold",
+  "official_submission": false,
+  "old_seed42_scores_included": false
+}

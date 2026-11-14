@@ -103,7 +103,7 @@ for data in model_folds(raw, samples, patients):
 
 ## 4 实验记录
 
-`artifacts/shared/experiment_results.csv` 已创建字段模板，当前没有模型实验记录。基础设施检查不会伪装成 baseline 分数。
+`artifacts/shared/experiment_results.csv` 已记录 Member A 的四组真实五折特征实验，详见 [Member A 工作说明](member_a/README.md)。公共基础的接口验收分数不作为模型性能。
 
 每个完整五折实验调用一次：
 
@@ -136,4 +136,18 @@ log_experiment(
 - [一手参赛者对 SMAPE+1 更新的说明](https://www.kaggle.com/competitions/amp-parkinsons-disease-progression-prediction/discussion/417124)：真值与预测均先加 1。
 - [第一名方案的指标说明](https://www.kaggle.com/competitions/amp-parkinsons-disease-progression-prediction/writeups/connecting-dotts-1st-place-solution)：最终使用 SMAPE+1。这里只核对指标，没有复现其模型。
 
-本次公共基础代码由 Codex 协助实现。课程要求披露 AI 使用，组员需审查、理解并在报告中如实说明这些辅助实现及自行完成的核心设计。本目录没有实现三条模型路线、生成课程报告或声称达到 Top-5 performance。
+本次公共基础代码由 Codex 协助实现。课程要求披露 AI 使用，组员需审查、理解并在报告中如实说明这些辅助实现及自行完成的核心设计。`common/` 只提供公共接口；`member_a/` 提供 A 的特征实验路线。当前不包含 B/C 的模型路线，也未声称达到 Top-5 performance。
+
+## Member A 特征实验
+
+在仓库根目录运行：
+
+```bash
+python -m pip install -r member_a/requirements.txt
+python -m unittest discover -s tests -v
+python -m member_a.verify
+```
+
+完整重训：`python -m member_a.run --output-dir member_a/results_reproduced`，然后执行 `python -m member_a.verify --results-dir member_a/results_reproduced --require-models`。训练默认不更改共享日志；仅在明确需要登记新实验时使用 `--append-shared-log`，现有 experiment ID 不可重复。
+
+A0 至 A3 均使用当前冻结的 seed=4486 和同一 split_id。主要比较值仍是五折 `mean_score`，不是 pooled OOF。代码、结果、图和 AI 协助说明见 [member_a/README.md](member_a/README.md)。本路线没有使用补充数据、预训练模型或融合，也没有执行官方提交。
