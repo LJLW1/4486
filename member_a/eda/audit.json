@@ -1,0 +1,155 @@
+{
+  "tables": {
+    "train_clinical_data.csv": {
+      "rows": 2615,
+      "columns": 8,
+      "patients": 248,
+      "visits": 2615,
+      "months": [
+        0,
+        3,
+        6,
+        9,
+        12,
+        18,
+        24,
+        30,
+        36,
+        42,
+        48,
+        54,
+        60,
+        72,
+        84,
+        96,
+        108
+      ],
+      "missing_counts": {
+        "visit_id": 0,
+        "patient_id": 0,
+        "visit_month": 0,
+        "updrs_1": 1,
+        "updrs_2": 2,
+        "updrs_3": 25,
+        "updrs_4": 1038,
+        "upd23b_clinical_state_on_medication": 1327
+      },
+      "sha256": "0897237a7c943f6afda9e083cf534eb0b506e5e00ffedad9bdc0c69248b86722"
+    },
+    "train_proteins.csv": {
+      "rows": 232741,
+      "columns": 5,
+      "patients": 248,
+      "visits": 1113,
+      "months": [
+        0,
+        3,
+        6,
+        12,
+        18,
+        24,
+        30,
+        36,
+        48,
+        54,
+        60,
+        72,
+        84,
+        96,
+        108
+      ],
+      "missing_counts": {
+        "visit_id": 0,
+        "visit_month": 0,
+        "patient_id": 0,
+        "UniProt": 0,
+        "NPX": 0
+      },
+      "sha256": "e6ec158bf3013338989806897276485ab930787d691f1eb1863c8da18e56f32d",
+      "unique_proteins": 227
+    },
+    "train_peptides.csv": {
+      "rows": 981834,
+      "columns": 6,
+      "patients": 248,
+      "visits": 1113,
+      "months": [
+        0,
+        3,
+        6,
+        12,
+        18,
+        24,
+        30,
+        36,
+        48,
+        54,
+        60,
+        72,
+        84,
+        96,
+        108
+      ],
+      "missing_counts": {
+        "visit_id": 0,
+        "visit_month": 0,
+        "patient_id": 0,
+        "UniProt": 0,
+        "Peptide": 0,
+        "PeptideAbundance": 0
+      },
+      "sha256": "3d1eba59f7def39fef4793a6e120e3ec84ab27c8911ae343fdcbf30a7324e301",
+      "unique_proteins": 227,
+      "unique_peptides": 968
+    },
+    "supplemental_clinical_data.csv": {
+      "rows": 2223,
+      "columns": 8,
+      "patients": 771,
+      "visits": 2223,
+      "months": [
+        0,
+        5,
+        6,
+        12,
+        18,
+        24,
+        30,
+        36
+      ],
+      "missing_counts": {
+        "visit_id": 0,
+        "patient_id": 0,
+        "visit_month": 0,
+        "updrs_1": 213,
+        "updrs_2": 214,
+        "updrs_3": 5,
+        "updrs_4": 928,
+        "upd23b_clinical_state_on_medication": 1101
+      },
+      "sha256": "c55db4a4a5ce31188621c96f02a6f81bc2861fd5d20b773ff8270efb9a4e7905"
+    },
+    "protein_panel": {
+      "possible_cells": 252651,
+      "observed_cells": 232741,
+      "wide_missing_percent": 7.880435858160073,
+      "min_measured_per_visit": 37,
+      "median_measured_per_visit": 212.0
+    },
+    "peptide_panel": {
+      "possible_cells": 1077384,
+      "observed_cells": 981834,
+      "wide_missing_percent": 8.868704194604703,
+      "min_measured_per_visit": 94,
+      "median_measured_per_visit": 903.0
+    }
+  },
+  "checks": {
+    "duplicate_clinical_patient_month": 0,
+    "duplicate_protein_visit_id_UniProt": 0,
+    "duplicate_peptide_visit_id_Peptide": 0,
+    "same_protein_peptide_visit_sets": true,
+    "clinical_visits_with_proteins": 1068,
+    "main_supplemental_patient_overlap": 0
+  }
+}
