@@ -1,0 +1,5 @@
+file,rows,columns,patients,visits,unique_proteins,unique_peptides
+train_clinical_data.csv,2615,8,248,2615,,
+train_proteins.csv,232741,5,248,1113,227.0,
+train_peptides.csv,981834,6,248,1113,227.0,968.0
+supplemental_clinical_data.csv,2223,8,771,2223,,

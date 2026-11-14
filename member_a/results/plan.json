@@ -1,0 +1,30 @@
+{
+  "created_utc": "2026-11-14T03:36:30.453574+00:00",
+  "experiments": {
+    "A0": "Known times: visit_month, horizon, target_month",
+    "A1": "A0 + 14 contemporaneous molecular summary features",
+    "A2": "A1 + 22 past-and-current molecular history features",
+    "A3": "A2 + 16 training-fold protein principal components"
+  },
+  "model": {
+    "loss": "absolute_error",
+    "learning_rate": 0.05,
+    "max_iter": 120,
+    "max_leaf_nodes": 7,
+    "max_depth": 3,
+    "min_samples_leaf": 20,
+    "l2_regularization": 5.0,
+    "early_stopping": false,
+    "random_state": 4486
+  },
+  "seed": 4486,
+  "split_id": "5445dbd361f26a5fcdc2e1a6eeda1a2d1387942264957eb9e17844ff9163d550",
+  "primary_score": "mean_score",
+  "selection": "Report all four fixed configurations without tuning",
+  "expected_requests": 12697,
+  "sources": {
+    "__init__.py": "d200e156f01c2d66559fb9fd611fe50fcfb9b06f10b3797a0b1d3293e983cf29",
+    "features.py": "ac45f3689340e39f1d95d9cbecf60efa73ae9e0ef53837dca7287f85e76b1796",
+    "run.py": "0b3d3847567a561879a18061f371e06c40f6d68edacb73873fde17a3d5119b96"
+  }
+}

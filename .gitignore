@@ -1,0 +1,17 @@
+# New local environments and Python caches. Existing tracked files are unaffected.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+*.csv.lock
+
+# Local-only model bundles and regenerated experiment directories.
+member_a/results/**/*.joblib
+member_a/results_reproduced/
+member_a/_build/
+member_a/.mpl-cache/
+
+# Keep newly downloaded competition archives and temporary files out of commits.
+*.zip
+*.tmp

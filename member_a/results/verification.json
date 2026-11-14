@@ -1,0 +1,72 @@
+{
+  "status": "passed",
+  "split_id": "5445dbd361f26a5fcdc2e1a6eeda1a2d1387942264957eb9e17844ff9163d550",
+  "n_requests": 12697,
+  "primary_score": "mean_score",
+  "scores": {
+    "A0": {
+      "fold_scores": {
+        "0": 59.19069882472693,
+        "1": 68.65625258372917,
+        "2": 66.48878116599978,
+        "3": 67.55440767698511,
+        "4": 66.21315963749306
+      },
+      "mean_score": 65.62065997778681,
+      "std_score": 3.328762331781652,
+      "oof_score": 65.48409062314452,
+      "n_predictions": 12697
+    },
+    "A1": {
+      "fold_scores": {
+        "0": 60.12500001792358,
+        "1": 68.8743384755945,
+        "2": 66.46858034644913,
+        "3": 68.05845055444539,
+        "4": 67.10295692722184
+      },
+      "mean_score": 66.12586526432689,
+      "std_score": 3.110354846230313,
+      "oof_score": 65.99005696646162,
+      "n_predictions": 12697
+    },
+    "A2": {
+      "fold_scores": {
+        "0": 60.67403127550315,
+        "1": 68.68395809674908,
+        "2": 68.97421874591397,
+        "3": 68.36058346558322,
+        "4": 67.07586406728566
+      },
+      "mean_score": 66.753731130207,
+      "std_score": 3.108209638168419,
+      "oof_score": 66.63172735332004,
+      "n_predictions": 12697
+    },
+    "A3": {
+      "fold_scores": {
+        "0": 59.23288889690935,
+        "1": 68.96724472923562,
+        "2": 68.91484946195952,
+        "3": 68.95898821664036,
+        "4": 68.00482242710633
+      },
+      "mean_score": 66.81575874637024,
+      "std_score": 3.808997083739559,
+      "oof_score": 66.64985815224222,
+      "n_predictions": 12697
+    }
+  },
+  "saved_fold_models_checked": 20,
+  "max_prediction_error": 7.105427357601002e-15,
+  "model_check_status": "passed",
+  "frozen_outputs_unchanged": true,
+  "sources": {
+    "__init__.py": "d200e156f01c2d66559fb9fd611fe50fcfb9b06f10b3797a0b1d3293e983cf29",
+    "eda.py": "5ee4d92d36aca30658f4d2b3e76e344e10eae5df153990dc5328d7a80788ba7d",
+    "features.py": "ac45f3689340e39f1d95d9cbecf60efa73ae9e0ef53837dca7287f85e76b1796",
+    "run.py": "0b3d3847567a561879a18061f371e06c40f6d68edacb73873fde17a3d5119b96",
+    "verify.py": "961af8ff5cc1a789b9f990e8600433135d199b01f9313ca0739997325da3cafe",
+    "write_materials.py": "c3c302d1462a528de9e7b2882ecfd19c1442672464061f4bebd83bc9ddf1a99a"
+  }
+}
