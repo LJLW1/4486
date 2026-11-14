@@ -1,3 +1,5 @@
+__pycache__/
+*.pyc
 # New local environments and Python caches. Existing tracked files are unaffected.
 .venv/
 __pycache__/
@@ -15,3 +17,4 @@ member_a/.mpl-cache/
 # Keep newly downloaded competition archives and temporary files out of commits.
 *.zip
 *.tmp
+
