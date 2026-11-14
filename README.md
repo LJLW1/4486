@@ -17,6 +17,58 @@ python -m common.verify
 
 真实数据已在 `amp-parkinsons-disease-progression-prediction/`，固定输出已生成在 `artifacts/shared/`。`prepare` 再次运行会核验原始文件及输出的 SHA-256，不重新分折或覆盖结果。需要改变协议或数据时，指定新的 `--output-dir`，并使用独立实验日志。输入路径也可以通过 `--data-dir` 指定。
 
+## Member C 最小 MLP
+
+安装 `requirements.txt` 后，打开 `C_improved_model/train_mlp.ipynb`，选择对应的 Python 内核，从上到下运行。模型由 `MLP` 类定义，训练由 `train_model` 函数定义。训练轮数、学习率和正则化参数在配置单元格直接修改。
+
+默认 `use_proteins=True`、`max_missing_rate=1.0`、`imputation_method="iterative"`，使用三个时间字段、四项评分类型的 one-hot 编码及当前访问的蛋白 NPX。每折仅根据训练部分的唯一访问筛选缺失率不超过阈值的蛋白，按相同列序处理验证数据；`max_missing_rate=1.0` 保留全部 227 种蛋白，`0.0` 仅保留训练部分完全无缺失的蛋白。填补由 `prepare_features` 函数完成：`median` 用唯一训练访问的中位数；`iterative` 先在唯一训练访问上标准化蛋白，再用 `IterativeImputer + BayesianRidge` 拟合蛋白间关系（最多 10 轮，每种蛋白参考 20 个相关特征，tol=0.01）。仅替换缺失值，观测值保持不变，填补的 NPX 裁剪到非负。填补器不使用时间、UPDRS 标签或验证患者。拼接时间特征后，再对模型输入拟合训练折 StandardScaler。NPX 暂不做 log 变换。若本机 OpenBLAS 小矩阵多线程运行缓慢，可在启动 notebook 内核前设置 `OPENBLAS_NUM_THREADS=1`；本次对照使用此设置。MLP 隐藏层为 32、16，以 MSE 损失和 AdamW 优化器完成 CPU 五折训练，预测裁剪至非负，最终按 SMAPE+1 评分。
+
+将 `use_proteins=False` 并从头运行，可复现仅时间和评分类型的 7 维输入参照实验。保留简单随机种子，不强制确定性运算。
+
+结果保存在 `artifacts/member_c/`：每次运行的 OOF CSV，以及通过公共接口追加的 `experiment_results.csv`。日志区分蛋白与时间特征实验，记录缺失阈值及每折保留的蛋白列。阈值对比结果见 `artifacts/member_c/protein_missingness_comparison.csv`；按唯一训练访问拟合的中位数与迭代填补对照见 `artifacts/member_c/protein_imputation_comparison.csv`。不使用肽、历史或补充临床特征，暂不保存推理模型或接入 Kaggle 提交 API。
+
+## Member C 改进对照
+
+`C_improved_model/model_improvements.ipynb` 按顺序运行六组实验：时间/蛋白原模型诊断、相同 Softplus 输出的 MSE 与 SMAPE+1 损失对照、SMAPE+1 下的蛋白实验，以及截至当前的组学访问历史实验。固定 200 轮，不按验证曲线挑选 epoch。实验结果、训练曲线、分目标诊断和总结保存在 `artifacts/member_c/improvements/`。
+
+单 seed 结果中，最佳候选为时间 + Softplus + SMAPE+1，五折平均分 65.1485；蛋白模型明显过拟合，本次访问历史未带来提升。Notebook 保留所有对照，尚未接入 Kaggle 提交或训练最终推理模型。
+
+## Member C 蛋白百分位编码
+
+`C_improved_model/protein_quantiles.ipynb` 比较蛋白五等级数值与五维 one-hot。每种蛋白的分界点由训练折唯一访问的非缺失 NPX 计算（20%、40%、60%、80%），缺失用同一训练部分的中位数填补，验证使用冻结的分界。每种编码对照线性输出 MSE、Softplus MSE、Softplus SMAPE+1，以及加入当前及过去的组学访问历史；共享两个时间模型对照。标签保持连续 UPDRS。
+
+沿用输入标准化；one-hot 每列也使用训练折 StandardScaler。重复分界可能导致某些等级为空，同值不会被强行分到不同等级。本轮没有额外加入缺失标记。每个实验的 OOF、曲线、分目标评分、每折蛋白列和分界点均保存在 `artifacts/member_c/protein_quantiles/`。
+
+## Member C 共享蛋白编码器
+
+`C_improved_model/protein_set.ipynb` 用共享网络编码每种蛋白的 ID embedding 和当前 NPX，按访问做 masked mean pooling，拼接时间与评分类型后预测 UPDRS。缺失蛋白不参与聚合，不做中位数填补；每折仅用唯一训练访问拟合蛋白标准化器。每个请求仍是一条监督样本，同一访问的蛋白表示只计算一次。
+
+固定 200 次全批次更新，使用 Softplus、SMAPE+1 和 AdamW；与纯时间模型同折比较。集合模型参数 1,921，五折平均 65.6205，时间模型为 65.1485：过拟合差距缩小，但未获得整体增益。结果、OOF、曲线、分项诊断及配置保存在 `artifacts/member_c/protein_set/`。本次 CPU 对照设置 `OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1`。
+
+## Member C 相关性筛选
+
+`C_improved_model/protein_selection.ipynb` 在每折训练患者内，按当前访问 NPX 与四项评分的相关性筛选 top 5/10/20，接入共享蛋白集合模型。排名使用控制访问月份秩后的 partial Spearman 绝对值在四项评分上的均值，同时保存 Pearson、Spearman、访问数、患者数和缺失率。每个组合至少有 100 个访问、50 位患者；仅四项评分均合格的蛋白参与排名。
+
+五折平均：纯时间 65.1485、全部蛋白 65.6205、top 5 为 65.2489、top 10 为 65.0331、top 20 为 65.2274。Top 10 收益仅 0.1154 分且只有两折改善，属于待复核的探索性结果。全数据排名仅作解释，不参与 CV 筛选；重复访问相关性不作独立样本显著性推断。结果在 `artifacts/member_c/protein_selection/`。
+
+## Member C Bayesian Ridge PLS 与 SVR
+
+`C_improved_model/classical_models.ipynb` 比较 Bayesian Ridge、PLS 回归、PCA+SVR 和 PLS+SVR，并提供纯时间 Bayesian Ridge/SVR 对照。每项 UPDRS 单独训练，全部 horizon 合并；不使用临床评分作为输入。Bayesian Ridge 和直接 PLS 使用时间与所有蛋白的联合输入；PCA/PLS+SVR 只压缩蛋白，再拼接时间。
+
+外层沿用冻结患者五折；内层使用患者三折，按 SMAPE+1 选择 PLS/PCA 组件数 1/2/5/10 及 RBF-SVR C=0.01/0.1/1/10。SVR epsilon=0.1、gamma=scale 固定。每次内层拟合都重新学习填充、缩放和降维；PCA 在唯一训练访问上拟合，监督 PLS 只使用当前训练部分标签。负预测统一裁剪为零。没有根据外层分数选参。
+
+结果保存在 `artifacts/member_c/classical_models/`，包括 OOF、各目标分数、内层搜索、每折配置、运行时间与 Bayesian Ridge 标准化系数。依赖已包含在现有 scikit-learn 中，无需新增安装。
+
+Final five-fold means: time_bayesian=71.0611, bayesian=74.6222, pls=68.9918, time_svr=66.4686, pca_svr=66.8982, pls_svr=66.8303. Full details: `artifacts/member_c/classical_models/summary.md`.
+
+## Member C 概率分类与 SMAPE 解码
+
+`C_improved_model/probability_smape.ipynb` 调用同目录 `probability_smape.py`，完成固定患者五折的四组特征实验。四项 UPDRS 分别训练固定小容量 LightGBM 多分类器，同一份概率比较最高概率类别、概率均值和最小期望 SMAPE+1 解码；不使用 supplemental、分子丰度或临床评分特征。新增依赖 `lightgbm==4.6.0`。
+
+SMAPE 解码五折平均：时间 64.8009、基础历史 58.2572、扩展历史 58.1587、仅组学可见扩展历史 65.3848。完整历史收益依赖临床与组学访问并集可见的本地假设；扩展相对基础仅改善 0.0985 且折间波动更大，未确认稳定增益。这是开发集结果，无隐藏成绩或 Top-5 结论。
+
+完整 OOF、分折模型与验证概率、分项结果及复现说明见 `artifacts/member_c/probability_smape/summary.md`。17 项单元测试通过，12 份 OOF 独立重评分及 80 份概率解码复核通过。本 notebook 仅训练，不接入比赛 API。
+
 ## 1 验证划分
 
 - 协议：`patient5-omics-smape1-v1`，5-fold，seed `4486`。
