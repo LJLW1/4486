@@ -180,3 +180,13 @@ python C_improved_model/validate_horizon_gated_residual.py
 ```
 - **只有明确稳定改善且特征可部署时**，才考虑把轻量 horizon 残差门控接入 V18 Kaggle 官方 demo；如果没改善立即淘汰，不做新超参数网格。比 60.092 更低才是相对最高实测 Private 的真正突破目标；第五名分数阈值 60.184 只是数值参照，晚提交不等于历史实际排名。
 - **执行状态**：实验代码已通过 GitHub 提交，但当前未实际执行，本轮没有新 Private 分数。不要将此前已完成的 69 分 Ordinal 失败继续解释为候选改善。
+
+
+## V7 直接残差组件（2026-11-15，代码已提交）
+
+- 用户明确说：**“直接针对 v7 设计一个残差组件吧”**，不是改 PPT、再重复 V18 OOF，也不是 Ordinal。
+- 新脚本 **`C_improved_model/v7_residual_adapter.py`**：轻量 Ridge 后处理残差校正；原 V7 的预测保持完整，通过 `f_\theta(\hat y_{V7},target,horizon,visit_month)` 估计误差，再做幅度封顶 + 小比例加法 `max(0,\hat y_{V7}+0.25*clip(\Delta,-3,3))`。特征仅来自原 V7 预测值、target、horizon、预测起点月份，Kaggle 官方 `prediction_id` 可恢复，不依赖额外不可见临床历史。Ridge `alpha=100`、未额外搜参。
+- **反泄漏关键**：只允许用**由未见过相应患者标签的 V7 模型**生成的完整 12,697 条 OOF 预测拟合。评估用 leave-one-fold-out 拟合残差，分折计分；全量 OOF 拟合最终 `residual_corrector.json`。不能使用 V7 在其训练患者上的 in-sample 预测，以免学习乐观残差。需先检查是否已有 V7 OOF；如果没有，本脚本无法凭 Kaggle Private 分数反推残差，也不应伪造 OOF。
+- 输入 schema `prediction_id,prediction[,fold]`。运行 `python C_improved_model/v7_residual_adapter.py --oof PATH_TO_V7_OOF.csv`。输出 `C_improved_model/v7_residual_results/{summary.csv,folds.csv,oof_predictions.csv,residual_corrector.json}`。
+- 推理插件用法（需确认真正 V7 Notebook 后接入）：`corrector=V7ResidualCorrector.load("residual_corrector.json")`；`output=corrector.correct_api_output(v7_predict_batch(...))`；输出仍由官方 API `env.predict(output)`。不要把未证实的 `teammate_aligned_model.py` 冒充实际 V7 已评分提交版本。
+- **状态**：现仅提交源码，未在实际 V7 OOF 上运行、未检查 Kaggle V7 Notebook 精确版本、未提交 Kaggle、没有改进分数。若缺少 V7 OOF，应该请求准确文件或从 V7 代码生成患者级 OOF，而非盲重训其他模型。
