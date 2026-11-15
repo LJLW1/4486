@@ -114,7 +114,9 @@ def fit_target(train, train_x, target, weighting):
 
 
 def fold_score_table(records):
-    df = pd.DataFrame(records)
+    if not records:
+        raise ValueError("No experiment records to aggregate")
+    df = pd.concat(records, ignore_index=True)
     fold = df.groupby(["variant", "fold"], sort=False).loss.mean().reset_index()
     summary = fold.groupby("variant").loss.agg(
         mean_fold_smape1="mean", std_fold_smape1=lambda v: v.std(ddof=0)
