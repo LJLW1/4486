@@ -151,3 +151,18 @@ python C_improved_model/validate_ordinal_lgbm.py --folds 0 1 2 3 4 --targets upd
 ```
 - 输出目录：`C_improved_model/ordinal_results/`，包含 `ordinal_comparison.csv`、`ordinal_predictions.csv`、`ordinal_summary.csv`、`ordinal_metadata.json`；每个 fold/target 运行后即时写出预测与成绩，防止最后汇总失败导致全部实验丢失。
 - 状态：**GitHub 已提交实验脚本，未执行本地数据训练，未产生 Ordinal 分数，更未得到 Kaggle 隐藏评分。** 该阶段仅讨论设计/实现与调试，课程要求组员独立审查并披露 AI 使用。
+
+
+## 第六轮后续：按用户要求只做两步（2026-11-15）
+
+用户已在本地运行 Ordinal LightGBM 五折×四目标，报告每目标五折均值：UPDRS1 54.543531→54.367013（Δ−0.176518，4/5折胜出）；UPDRS2 63.444628→63.233608（Δ−0.211020，4/5）；UPDRS3 64.879515→64.532445（Δ−0.347070，4/5）；UPDRS4 47.387456→47.244424（Δ−0.143032，4/5）。不允许直接把四项目标分数的算术平均当完整五折指标。
+
+1. **无重训总体 OOF 核算**：新文件 `C_improved_model/analyze_ordinal_oof.py` 从已经完成的 `ordinal_results/ordinal_predictions.csv` 读取并与冻结 `artifacts/shared/samples.csv` 对齐，检查完整五折/四目标、无重复请求、label/fold 匹配。输出 `ordinal_overall_summary.csv`、`ordinal_overall_folds.csv`、`ordinal_target_horizon.csv`（五折平均、逐折差值、fold win rate、overall prediction flip rate）；**不要再训练**。
+2. **在线特征可用性检查**：新文件 `C_improved_model/audit_ordinal_online_features.py` 不训练，只将离线使用的临床访问+组学历史与 omics-only conservative replay 对照，输出 `ordinal_online_visibility_audit.csv`。本地代理不是 Kaggle 的实际 `iter_test` 输入；完整 clinical visits 对隐藏患者并非可用信息，因此历史特征必须以在线可观测状态重新构造并使用真实官方 demo 验证后才可提出部署成功/真实 Kaggle 成绩的结论。
+```bash
+git switch member_c && git pull origin member_c
+python C_improved_model/analyze_ordinal_oof.py
+python C_improved_model/audit_ordinal_online_features.py
+```
+- 状态：两份脚本已提交 GitHub；本会话仅收到四个目标汇总数字，没有 `ordinal_predictions.csv` 的文件内容，也没有该用户本机 Kaggle CLI 的认证运行环境，因此 **尚未实测整体 OOF / Kaggle 隐藏评分**。不应声称已提交 Kaggle，也不应盲目把离线特征方案直接写入已通过隐藏评分的官方 notebook。
+- 根据用户要求，现阶段不做 Horizon-specific 新实验、不重跑 Ordinal 五折、不改原 V18 和 main。课程 AI 使用规则要求独立审查实现并披露辅助使用。
