@@ -106,3 +106,18 @@
 - 数据来源为用户上传的真实五折输出，尚未独立复现实验，也没有此次模型的 Kaggle 隐藏评分。
 - **下一步优先调查历史 LightGBM 58.1587 与 V18 62.1387 之间的数据可见性/请求构造差异。** 旧方案的临床访问历史可能在离线时利用了 Kaggle 在线迭代 API 无法观察到的访问事件；先对齐合法特征和统一验证，再判断模型收益。不得将分数差直接归因于架构改进。
 - 进一步实验应优先分析 Tree-only 与 NN-only 的按目标和时间跨度误差、不同来源训练请求数量/分布、全数据标签分布及蛋白缺失。避免继续扩展第 4 轮条件融合的调参搜索。
+
+
+## 第五轮：训练样本权重、时间条件、概率温度（脚本已提交，待运行）
+
+新脚本 `C_improved_model/validate_rows_time_temperature.py`，两阶段分别执行，不修改原 V18 和 Kaggle demo：
+
+1. `--stage rows`：3 种来源（omics / winner_origins / winner_origins_supplemental）×3 种权重（uniform / unique_label / patient_equal）×2 组时间特征（original / relative），共 18 组。fixed LightGBM / SMAPE+1 最小风险解码，使用原冻结患者五折，分别保存 `rows_summary.csv`、`rows_folds.csv`、`rows_oof.csv`。
+2. `--stage temperature`：指定上阶段选择的 `--source`、`--weight`、`--time`；对每个外层 fold 在训练患者内另外留出 25% 校准患者，在每个 UPDRS 目标内用五个候选温度选择最小 SMAPE 解码损失；再用完整外层训练集重训分类器，评估外层验证患者。输出 `temperature_summary.csv`、`temperature_folds.csv`、`temperature_oof.csv`、`temperatures_fold*.json`。
+3. 运行：
+```bash
+git switch member_c && git pull origin member_c
+python C_improved_model/validate_rows_time_temperature.py --stage rows
+python C_improved_model/validate_rows_time_temperature.py --stage temperature --source winner_origins --weight unique_label --time original
+```
+第二条命令的 source/weight/time 是预设示例值；应先根据第一阶段成绩和可用性审计确定，而不是默认它必然最优。用相同的外层五折开发选择仍是探索性模型选择，不能视为独立测试。原 v18 62.1387 用不同模型与历史数据来源，暂不视作严格头对头对照。**当前仅 GitHub 提交代码，没有完整运行、没有新分数。** 学生应自行检查逻辑并按课程规则披露 AI 使用。
