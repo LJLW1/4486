@@ -166,3 +166,17 @@ python C_improved_model/audit_ordinal_online_features.py
 ```
 - 状态：两份脚本已提交 GitHub；本会话仅收到四个目标汇总数字，没有 `ordinal_predictions.csv` 的文件内容，也没有该用户本机 Kaggle CLI 的认证运行环境，因此 **尚未实测整体 OOF / Kaggle 隐藏评分**。不应声称已提交 Kaggle，也不应盲目把离线特征方案直接写入已通过隐藏评分的官方 notebook。
 - 根据用户要求，现阶段不做 Horizon-specific 新实验、不重跑 Ordinal 五折、不改原 V18 和 main。课程 AI 使用规则要求独立审查实现并披露辅助使用。
+
+
+## Top-5 目标恢复为模型优化（2026-11-15）
+
+用户明确要求 **不是制作 PPT，必须优化模型并通过 Kaggle Private Top-5 分数门槛**。官方历史榜单 Top 5 第五名 Private **60.184**（2023 赛季最终榜）；此前已提交 V7 Private **60.092**，数值已在历史 Top-5 区间，但 V7 是 winner-inspired，尚不能作为原创改进成果；V9 Private 60.106。任何新方案必须在同一 Kaggle notebook 环境通过 API 实测，禁止把 CV 视作 Private。
+
+- V18 已有冻结 OOF 残差消融输出（原本由 `validate_residual_scale.py` 生成，路径 `C_improved_model/residual_scale_results/oof_predictions.csv`，含 λ=0/0.25/0.5/0.75/1）。离线 λ=.75 为 62.0674，相对 λ=1 的 62.1387 改善微弱。
+- 新增 **零重训原创实验** `C_improved_model/validate_horizon_gated_residual.py`：测试按 horizon 改变残差系数的轻量推理门控，不再训练 V18 模型、不重新五折。每个 outer fold 用另外四折患者的 OOF 损失为 0/6/12/24 月分别从 λ=0.5、0.75、1 中选候选；相对固定 λ=.75 改善至少 0.10 才使用，否则保持 λ=.75，避免更大的搜索空间。分折选择结果、OOF/逐折/整体 SMAPE 和 flip rate 输出至 `horizon_gate_results/`。这仍是对同一患者五折的探索性二级模型选择，不能宣称独立确认或 Top 5。
+```bash
+git switch member_c && git pull origin member_c
+python C_improved_model/validate_horizon_gated_residual.py
+```
+- **只有明确稳定改善且特征可部署时**，才考虑把轻量 horizon 残差门控接入 V18 Kaggle 官方 demo；如果没改善立即淘汰，不做新超参数网格。比 60.092 更低才是相对最高实测 Private 的真正突破目标；第五名分数阈值 60.184 只是数值参照，晚提交不等于历史实际排名。
+- **执行状态**：实验代码已通过 GitHub 提交，但当前未实际执行，本轮没有新 Private 分数。不要将此前已完成的 69 分 Ordinal 失败继续解释为候选改善。
