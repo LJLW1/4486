@@ -1,5 +1,8 @@
 # CS4486 Parkinson 项目公共基础
 
+> **Member C 当前进度（2026-11-15）**：参见 [V18 实验交接文档](C_improved_model/PROGRESS_HANDOFF.md)，包含两轮五折结果、第三轮待测方案、已解决的 macOS 环境问题、Top-5 目标与下个对话接续说明。
+
+
 按上级目录 `CS4486_Three_Person_Parallel_Workplan.docx` 第 2 节建立四个共享接口：验证划分、评价指标、数据输入、实验日志。A / B / C 可以在这些接口上分别开展自己的模型实验。
 
 ## 开始使用
