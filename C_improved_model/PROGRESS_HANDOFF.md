@@ -31,7 +31,7 @@
 
 第二轮结果脚本：`C_improved_model/validate_two_stage.py`；输出 `two_stage_results/`。两阶段相对 v18 的五折差值约为 **[+0.3472, −0.1865, −0.2557, +0.4831, −0.0506]**，平均比 v18 差 0.0675。相关实现 `architectures.py` 新增 `residual_two_stage` variant、`teammate_neural_proteins.py` 新增训练模式，**原 joint 默认保持不变**。
 
-## 第三轮实验：已提交代码，等待真实数据验证
+## 第三轮实验：五折结果已收到，全部回归融合方案退步
 
 **动机：** 不再反复调整残差强度，而是检验 LightGBM 部分是否更适合连续目标回归。原 v18 的树是分类预测+最小期望 SMAPE 解码；新实验分别训练 `regression_l1`（MAE）、`huber`、`poisson` 三种 `LGBMRegressor`，保留原 v18 的神经输出，按比例混合替换原分类树输出。
 
@@ -45,12 +45,26 @@
   python C_improved_model/validate_tree_regression.py
   ```
 - 结果目录：**`C_improved_model/tree_regression_results/`**，包含 `summary.csv`、`folds.csv`、`oof_predictions.csv`、`metadata.json`；目录已加入 `.gitignore`，默认不会提交结果文件。
-- **运行状态（截至本次交接）：尚未收到第三轮的五折评分。** 用户此前首次执行时遇到 macOS LightGBM 缺少 `libomp.dylib`，**用户随后明确确认“环境已经解决了”**。所以不再重复建议安装 Homebrew/libomp，而应让用户重跑上面命令、读取第三轮 CSV，并根据真实分数继续优化。
-- 检验 `delta_vs_v18 < 0` 的候选、逐折是否稳定；若出现值得继续的方案，下一步需复核接口与移植 Kaggle Notebook，不要直接改原 v18 提交而丢失回退路径。第三轮尚没有经证实的提升，不得捏造数字。
+- **运行状态：第三轮已经完成，用户上传 `summary(2).csv` 与 `folds(2).csv`，真实五折成绩见下表。** macOS `libomp.dylib` 问题已解决。无需重新运行同一实验。
+- **第三轮关键成绩（真实用户上传的五折验证）**：
+
+  | 模型 | 五折平均 SMAPE+1 ↓ | delta_vs_v18 |
+  |---|---:|---:|
+  | v18 分类树原模型 | **62.138694** | 0 |
+  | regression_l1_w0p25 | 62.243914 | +0.105220 |
+  | regression_l1_w0p5 | 62.324398 | +0.185704 |
+  | regression_l1_w0p75 | 62.388628 | +0.249934 |
+  | regression_l1_w1p0 | 62.460047 | +0.321353 |
+  | poisson_w0p25 | 63.720266 | +1.581572 |
+  | huber_w0p25 | 64.798286 | +2.659592 |
+  | poisson_w1p0 | 66.491706 | +4.353012 |
+  | huber_w1p0 | 68.532315 | +6.393621 |
+
+  剩余融合权重也全部为正 delta。**12 个候选全部退步；不采用回归树替换分类树。** 最好的新方案是 MAE 25%，但仅 Fold 2 改善（−0.045645）；Fold 0/1/3/4 分别退步 +0.231216、+0.081971、+0.093786、+0.164772。继续优化需要转向其他结构或数据方法，不应再将本轮写成待测。
 
 ## 已知技术问题与后续工作优先级
 
-1. **首要：获得第三轮真实 `summary.csv`、`folds.csv`**，分析 LightGBM 回归与融合是否改善；不要预先断言有效。用户可以直接上传 CSV，也可以强制提交到 `member_c`。
+1. **第三轮已确认失败，不需要重新运行。** 下一步应寻找新方向：分析不同 UPDRS target/horizon、临床历史特征构造与训练分布，然后实现第四轮方案及冻结五折比较。
 2. 如果没有显著改善，继续推进更大收益可能性的方案，而不是宣布完成：检查训练样本构造/样本权重、各 target/horizon 误差分布与偏差、交叉验证与 Kaggle 推理分布差异、树与神经的目标/时间条件融合、蛋白缺失样本与非缺失样本表现。须控制泄漏与过度调参。允许通过有依据的实验淘汰方案。
 3. 本地 LightGBM 有时提示 `X does not have valid feature names`，属 sklearn warning，不影响训练完成，但要保持特征顺序一致。此前缺失 `libomp.dylib` 的 macOS 导入报错**已解决**。
 4. 正式 Kaggle Notebook 仍默认原 v18。若第三轮或后续模型胜出，需同步修改官方 demo 中模型定义和训练/推理代码，遵守官方环境限制，取得真实 Kaggle 分数才可判断 Top 5。
@@ -59,6 +73,6 @@
 
 ## 下个对话接续提示
 
-“阅读 `C_improved_model/PROGRESS_HANDOFF.md`。当前第三轮 LightGBM 连续回归融合五折实验代码已提交到 GitHub `LJLW1/4486` 的 `member_c` 分支；macOS libomp 问题已解决。请查看我新上传的 `tree_regression_results/summary.csv` 和 `folds.csv`，分析相对 v18 的改进与稳定性，继续提出并实现下一轮冲击 Top 5 的实验，不要只推荐停止。未经验证不得宣称 Kaggle 排名。”
+“阅读 `C_improved_model/PROGRESS_HANDOFF.md`。第三轮 LightGBM 回归融合已完成五折验证，12 个候选全部低于原 v18（v18=62.138694；最好新候选 MAE-25%=62.243914）。macOS libomp 已解决。请直接推进第四轮冲击 Top 5 的新实验，不要重跑已失败的第三轮或建议停止。未经验证不得宣称 Kaggle 排名。”
 
 **文件与协作约定：** 不改 `main`；GitHub 文件变更可直接通过连接的 GitHub 工具提交到 `member_c`。交接文档必须随实验结果更新。所有离线结果与真正 Kaggle 成绩要明确区分。代码由 ChatGPT 辅助实现，须人工审查及按课程要求披露。
