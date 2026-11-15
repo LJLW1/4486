@@ -21,7 +21,7 @@ class ProteinNetwork(nn.Module):
 
 
 class ProteinModel(AlignedModel):
-    def fit(self, rows, features, protein_values, epochs=200):
+    def fit(self, rows, features, protein_values, epochs=200, training_mode='joint', base_epochs=100):
         torch.set_num_threads(1)
         tree_x = np.column_stack([features[:, TREE_INDICES], rows.target_index.to_numpy()])
         self.classifier = LGBMClassifier(n_estimators=300, num_leaves=7, learning_rate=0.03,
@@ -45,12 +45,28 @@ class ProteinModel(AlignedModel):
         observed = torch.zeros_like(y, dtype=torch.bool)
         y[row_origin, rows['head'].to_numpy()] = torch.tensor(rows.rating.to_numpy(), dtype=torch.float32)
         observed[row_origin, rows['head'].to_numpy()] = True
+        if training_mode not in ('joint', 'two_stage'):
+            raise ValueError('Unknown training mode')
+        if training_mode == 'two_stage' and not (0 < base_epochs < epochs):
+            raise ValueError('base_epochs must be between 1 and epochs-1')
         self.networks = []
         for seed in [4486, 4487, 4488]:
             torch.manual_seed(seed)
             network = ProteinNetwork()
             optimizer = torch.optim.AdamW(network.parameters(), lr=0.003, weight_decay=0.01)
             for epoch in range(epochs):
+                if training_mode == 'two_stage' and epoch == base_epochs:
+                    # Freeze the pretrained clinical network; train only protein correction.
+                    for parameter in network.base.parameters():
+                        parameter.requires_grad_(False)
+                    optimizer = torch.optim.AdamW(network.correction.parameters(), lr=0.003, weight_decay=0.01)
+                if training_mode == 'two_stage' and epoch < base_epochs:
+                    # Correction starts at zero and stays frozen during base pretraining.
+                    for parameter in network.correction.parameters():
+                        parameter.requires_grad_(False)
+                elif training_mode == 'two_stage' and epoch == base_epochs:
+                    for parameter in network.correction.parameters():
+                        parameter.requires_grad_(True)
                 for batch in torch.randperm(len(x)).split(256):
                     prediction = network(x[batch])
                     loss = (200 * abs(prediction - y[batch]) / (prediction + y[batch] + 2))[observed[batch]].mean()
@@ -59,6 +75,9 @@ class ProteinModel(AlignedModel):
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
+            if training_mode == 'two_stage':
+                for parameter in network.parameters():
+                    parameter.requires_grad_(True)
             network.eval()
             self.networks.append(network)
             print('protein network seed', seed, 'trained', flush=True)
