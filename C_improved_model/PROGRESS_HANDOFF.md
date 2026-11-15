@@ -190,3 +190,14 @@ python C_improved_model/validate_horizon_gated_residual.py
 - 输入 schema `prediction_id,prediction[,fold]`。运行 `python C_improved_model/v7_residual_adapter.py --oof PATH_TO_V7_OOF.csv`。输出 `C_improved_model/v7_residual_results/{summary.csv,folds.csv,oof_predictions.csv,residual_corrector.json}`。
 - 推理插件用法（需确认真正 V7 Notebook 后接入）：`corrector=V7ResidualCorrector.load("residual_corrector.json")`；`output=corrector.correct_api_output(v7_predict_batch(...))`；输出仍由官方 API `env.predict(output)`。不要把未证实的 `teammate_aligned_model.py` 冒充实际 V7 已评分提交版本。
 - **状态**：现仅提交源码，未在实际 V7 OOF 上运行、未检查 Kaggle V7 Notebook 精确版本、未提交 Kaggle、没有改进分数。若缺少 V7 OOF，应该请求准确文件或从 V7 代码生成患者级 OOF，而非盲重训其他模型。
+
+
+## 重大里程碑：V7 + Residual Correction 线上 Private 60.067（2026-11-15）
+
+**用户明确报告：新提交成功，Kaggle Private SMAPE+1 = 60.067。** 原 V7 Private 60.092；新版本改善 **−0.025（越低越好）**，约为 0.0416% 相对下降。记录为 **user-reported Kaggle result**；尚未在此记录中附 Kaggle kernel version、submission ID、成绩页面截图或外部核验，故不声称独立核实/实际榜单排名。
+
+- 用户直接提供了 `winner_reproduction_submission.ipynb`，此前生成并试跑的 `v7_residual_official_api_submission.ipynb` 以 V7 原始结构为基线，在输出阶段加入轻量级 Ridge 残差校正；输出通过原生官方 API。
+- 新版本在 Notebook 内通过独立患者划分获取残差训练/校验数据，在校验未达门槛时退回 V7；实际 Kaggle 测试得到更低 Private 分数，证明至少此次线上提交成功改善了 V7 原有数值表现。
+- 将此版本作为当前最优 **已报告**线上结果，保留原始 V7 和新版本 notebook、相关 Kaggle 版本及实验日志；不要覆盖这次结果，也不要继续默认使用较差的 Ordinal（Private 约 69）。
+- 课程汇报应按真实方法描述为“V7-derived baseline + bounded residual correction”，明确原创增量是残差后处理及其验证，不将原 V7 本身描述为原创。
+- 这一步的成果是模型改进，不代表已经独立确认历史榜单名次或达到任何官方实时排名。
