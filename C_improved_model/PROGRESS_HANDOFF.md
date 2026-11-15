@@ -134,3 +134,20 @@ python C_improved_model/validate_rows_time_temperature.py --stage temperature-ch
 ```
 
 需要在原输出目录 `C_improved_model/row_time_calibration_results/` 中保留之前的五个 `temperatures_fold*.json`，并确保 `--source/--weight/--time` 与这些 JSON 当时的配置一致。输出：`temperature_check_summary.csv`、`temperature_check_folds.csv`、`temperature_check_pairs.csv`（每折即时保存）、`temperature_check_breakdown.csv`（target × horizon 的翻转率、平均损失差）。**目前只提交代码，尚未验证本地执行和分数。**
+
+
+## 第六轮：Ordinal LightGBM 最小实验（代码已提交，待实测）
+
+- 文件：`C_improved_model/validate_ordinal_lgbm.py`。默认只做 **Fold 0 / updrs_1**（1 个原多分类 LightGBM + 最多 8 个二分类阈值 LightGBM），避免再次默认执行 18 配置的长时间网格。
+- 固定数据和特征：原 `winner_rows_experiment.py` 的 omics-origin、uniform、original；每目标只用外层训练患者。阈值从训练标签的等分位点确定，仅拟合二分类 `P(UPDRS>t|X)`；单调化累积概率后，用训练集内部标签频率分摊每个有序分箱的概率质量，最后使用原 `decision()` 最小期望 SMAPE+1 解码。
+- 默认运行：
+```bash
+git switch member_c && git pull origin member_c
+python C_improved_model/validate_ordinal_lgbm.py
+```
+- 完整五折、四目标仅在试验有明确价值后手动运行：
+```bash
+python C_improved_model/validate_ordinal_lgbm.py --folds 0 1 2 3 4 --targets updrs_1 updrs_2 updrs_3 updrs_4
+```
+- 输出目录：`C_improved_model/ordinal_results/`，包含 `ordinal_comparison.csv`、`ordinal_predictions.csv`、`ordinal_summary.csv`、`ordinal_metadata.json`；每个 fold/target 运行后即时写出预测与成绩，防止最后汇总失败导致全部实验丢失。
+- 状态：**GitHub 已提交实验脚本，未执行本地数据训练，未产生 Ordinal 分数，更未得到 Kaggle 隐藏评分。** 该阶段仅讨论设计/实现与调试，课程要求组员独立审查并披露 AI 使用。
