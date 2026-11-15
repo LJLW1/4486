@@ -39,10 +39,10 @@ def analyze(input_path, output_dir):
         check["loss_" + name.removeprefix("prediction_")] = 200 * np.abs(y-p)/(y+p+2)
     check["delta"] = check.loss_ordinal - check.loss_multiclass
     check["flipped"] = check.prediction_multiclass != check.prediction_ordinal
-    folds = check.groupby("fold").agg(
+    folds = check.groupby("fold_fixed").agg(
         requests=("delta", "size"), multiclass=("loss_multiclass", "mean"),
         ordinal=("loss_ordinal", "mean"), delta=("delta", "mean"),
-        flip_rate=("flipped", "mean")).reset_index()
+        flip_rate=("flipped", "mean")).reset_index().rename(columns={"fold_fixed": "fold"})
     heads = check.groupby(["target", "horizon"]).agg(
         requests=("delta", "size"), multiclass=("loss_multiclass", "mean"),
         ordinal=("loss_ordinal", "mean"), delta=("delta", "mean"),
