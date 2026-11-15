@@ -121,3 +121,16 @@ python C_improved_model/validate_rows_time_temperature.py --stage rows
 python C_improved_model/validate_rows_time_temperature.py --stage temperature --source winner_origins --weight unique_label --time original
 ```
 第二条命令的 source/weight/time 是预设示例值；应先根据第一阶段成绩和可用性审计确定，而不是默认它必然最优。用相同的外层五折开发选择仍是探索性模型选择，不能视为独立测试。原 v18 62.1387 用不同模型与历史数据来源，暂不视作严格头对头对照。**当前仅 GitHub 提交代码，没有完整运行、没有新分数。** 学生应自行检查逻辑并按课程规则披露 AI 使用。
+
+
+## 温度校准快速复核（已提交实现，待运行）
+
+由于第一阶段 18 配置 × 五折 × 四个目标需重复训练 360 个分类器、运行过久，之后默认使用单配置的最小针对性对照。新入口保留现有脚本，新增 `--stage temperature-check`：直接读取上次生成的 `temperatures_fold0.json`…`temperatures_fold4.json`，**每个外层 fold 每目标只训练一次最终 LightGBM，共 20 次 fit**，在相同模型的同一批预测概率上同时计算原始 T=1 和所选温度的 SMAPE 决策。无需重新运行 rows 网格，也不用重新训练内层温度选择器。它严格用于隔离温度变化影响，不会声称提供独立 Kaggle 测试。
+
+```bash
+git switch member_c
+git pull origin member_c
+python C_improved_model/validate_rows_time_temperature.py --stage temperature-check --source omics --weight uniform --time original
+```
+
+需要在原输出目录 `C_improved_model/row_time_calibration_results/` 中保留之前的五个 `temperatures_fold*.json`，并确保 `--source/--weight/--time` 与这些 JSON 当时的配置一致。输出：`temperature_check_summary.csv`、`temperature_check_folds.csv`、`temperature_check_pairs.csv`（每折即时保存）、`temperature_check_breakdown.csv`（target × horizon 的翻转率、平均损失差）。**目前只提交代码，尚未验证本地执行和分数。**
