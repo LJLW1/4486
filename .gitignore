@@ -17,4 +17,5 @@ member_a/.mpl-cache/
 # Keep newly downloaded competition archives and temporary files out of commits.
 *.zip
 *.tmp
-
+# Generated V18 residual-scale cross-validation artifacts.
+C_improved_model/residual_scale_results/
