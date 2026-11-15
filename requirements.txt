@@ -2,3 +2,5 @@ numpy==1.26.4
 pandas==2.3.3
 scikit-learn==1.6.1
 filelock==3.19.1
+torch==2.8.0
+lightgbm==4.6.0
