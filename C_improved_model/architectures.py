@@ -8,6 +8,7 @@ class ResidualNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         self.base = ScoreNetwork()
+        self.residual_scale = 1.0  # V18 default; adjust only during held-out evaluation
         self.correction = nn.Sequential(nn.Linear(len(NN_INDICES) + 4, 16), nn.ReLU(), nn.Linear(16, 16))
         nn.init.zeros_(self.correction[-1].weight)
         nn.init.zeros_(self.correction[-1].bias)
@@ -15,7 +16,7 @@ class ResidualNetwork(nn.Module):
     def forward(self, features):
         base = self.base(features[:, :len(NN_INDICES)])
         available = features[:, -2:].amax(dim=1, keepdim=True)
-        delta = self.correction(features) * available
+        delta = self.correction(features) * available * self.residual_scale
         return (base + delta).clamp_min(0)
 
 
