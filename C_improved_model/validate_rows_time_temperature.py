@@ -209,6 +209,78 @@ def stage_temperature(evaluation, datasets, output, source, weight, time, inner_
     save(records, output, "temperature")
 
 
+def stage_temperature_check(evaluation, datasets, output, source, weight, time):
+    """Fast paired check: 20 full models, no re-training inner calibration.
+
+    Reuses temperatures_fold*.json from the previous temperature experiment.
+    The same fitted classifier predicts T=1 and selected T, isolating only
+    probability calibration. Does not tune using outer validation labels.
+    """
+    records = []
+    evx = datasets["omics"][1]
+    diagnostics = []
+    for fold in range(5):
+        temperature_path = output / f"temperatures_fold{fold}.json"
+        if not temperature_path.is_file():
+            raise FileNotFoundError(
+                f"Missing {temperature_path}; first complete the original temperature stage"
+            )
+        temperatures = json.loads(temperature_path.read_text())
+        if set(temperatures) != set(TARGETS):
+            raise ValueError(f"Unexpected temperature targets in {temperature_path}")
+        valid_mask = evaluation.fold.eq(fold)
+        valid = evaluation.loc[valid_mask].reset_index(drop=True)
+        valid_x = time_features(evx.loc[valid_mask], time)
+        train, train_x0 = get_train(datasets, set(valid.patient_id), source)
+        train_x = time_features(train_x0, time)
+        baseline = np.full(len(valid), np.nan)
+        calibrated = np.full(len(valid), np.nan)
+        for target in TARGETS:
+            selected = valid.target.eq(target).to_numpy()
+            if not selected.any():
+                continue
+            model = fit_target(train, train_x, target, weight)
+            prob = predict_prob(model, valid_x.loc[selected])
+            temperature = float(temperatures[target])
+            if not np.isfinite(temperature) or temperature <= 0:
+                raise ValueError(f"Invalid temperature for {target}: {temperature}")
+            baseline[selected] = decision(prob)
+            calibrated[selected] = decision(apply_temperature(prob, temperature))
+            del model
+        if not np.isfinite(baseline).all() or not np.isfinite(calibrated).all():
+            raise AssertionError("Incomplete paired predictions")
+        frame = valid[["patient_id", "visit_month", "target", "horizon", "rating", "fold"]].copy()
+        frame["pred_t1"] = baseline
+        frame["pred_calibrated"] = calibrated
+        frame["flipped"] = baseline != calibrated
+        frame["loss_t1"] = loss(frame.rating, baseline)
+        frame["loss_calibrated"] = loss(frame.rating, calibrated)
+        frame["delta_loss"] = frame.loss_calibrated - frame.loss_t1
+        diagnostics.append(frame)
+        for name, pred in (("t1_same_fit", baseline), ("calibrated_same_fit", calibrated)):
+            item = valid[["patient_id", "visit_month", "target", "horizon", "rating", "fold"]].copy()
+            item["variant"], item["prediction"] = name, pred
+            item["loss"] = loss(item.rating, pred)
+            records.append(item)
+        # Incremental recovery of completed folds: no lost results on later failures.
+        pd.concat(diagnostics, ignore_index=True).to_csv(
+            output / "temperature_check_pairs.csv", index=False
+        )
+        print(
+            f"fold {fold}: T=1 {frame.loss_t1.mean():.4f}; "
+            f"calibrated {frame.loss_calibrated.mean():.4f}; "
+            f"flip rate {frame.flipped.mean():.2%}", flush=True
+        )
+    save(records, output, "temperature_check")
+    pairs = pd.concat(diagnostics, ignore_index=True)
+    grouped = pairs.groupby(["target", "horizon"], as_index=False).agg(
+        n=("flipped", "size"), flip_rate=("flipped", "mean"),
+        mean_delta_loss=("delta_loss", "mean")
+    )
+    grouped.to_csv(output / "temperature_check_breakdown.csv", index=False)
+    print(f"overall prediction flip rate: {pairs.flipped.mean():.2%}", flush=True)
+
+
 def save(records, output, name):
     df, fold, summary = fold_score_table(records)
     df.to_csv(output / f"{name}_oof.csv", index=False)
@@ -220,7 +292,7 @@ def save(records, output, name):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--stage", choices=("rows", "temperature"), required=True)
+    parser.add_argument("--stage", choices=("rows", "temperature", "temperature-check"), required=True)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "amp-parkinsons-disease-progression-prediction")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "C_improved_model" / "row_time_calibration_results")
     parser.add_argument("--source", choices=SOURCES, default="winner_origins")
@@ -234,9 +306,12 @@ def main():
     evaluation, datasets = load_data(args.data_dir)
     if args.stage == "rows":
         stage_rows(evaluation, datasets, args.output_dir)
-    else:
+    elif args.stage == "temperature":
         stage_temperature(evaluation, datasets, args.output_dir, args.source, args.weight,
                           args.time, args.inner_fraction)
+    else:
+        stage_temperature_check(evaluation, datasets, args.output_dir, args.source,
+                                args.weight, args.time)
 
 
 if __name__ == "__main__":
