@@ -76,3 +76,20 @@
 “阅读 `C_improved_model/PROGRESS_HANDOFF.md`。第三轮 LightGBM 回归融合已完成五折验证，12 个候选全部低于原 v18（v18=62.138694；最好新候选 MAE-25%=62.243914）。macOS libomp 已解决。请直接推进第四轮冲击 Top 5 的新实验，不要重跑已失败的第三轮或建议停止。未经验证不得宣称 Kaggle 排名。”
 
 **文件与协作约定：** 不改 `main`；GitHub 文件变更可直接通过连接的 GitHub 工具提交到 `member_c`。交接文档必须随实验结果更新。所有离线结果与真正 Kaggle 成绩要明确区分。代码由 ChatGPT 辅助实现，须人工审查及按课程要求披露。
+
+
+## 第四轮：Target × Horizon 条件融合（已提交代码，待运行）
+
+- 实现文件：`C_improved_model/validate_conditional_fusion.py`，仅新增独立离线实验，不修改 v18 Notebook、模型架构或 main。
+- 假设：原 V18 固定按目标使用 `ALPHA=[0.625,0.75,0.75,0.375]`，但树和神经网络在不同 horizon 的相对误差可能不同；尝试为 16 个 target/horizon 组合估计单独的融合权重。
+- 反泄漏设计：外层仍用冻结五折；每个外层训练患者中按 `random_state=4486+fold` 抽出 25% 主队列患者作为内层校准患者；内层训练排除这些患者（包括其 supplemental 记录）。内层校准只使用这些患者的标签，外层验证患者标签从不用于权重学习。随后在全部外层训练患者上重新训练 V18，使用冻结校准权重预测外层验证患者。
+- 16 个权重在 [0,1] 的九点网格上选取，按对应 V18 权重施加二次惩罚，校准样本数少于 30 时回退固定权重；保留每目标/horizon 的树、神经、原融合和新融合诊断。
+- 输出：`conditional_fusion_results/{summary.csv,folds.csv,head_diagnostics.csv,oof_predictions.csv,metadata.json}`，该目录应保留为本地产物，不要把 smoke test 视为正式五折。
+- 完整运行（200 epochs）：
+  ```bash
+  git checkout member_c
+  git pull origin member_c
+  python C_improved_model/validate_conditional_fusion.py
+  ```
+- **当前状态：仅 GitHub 实验代码提交成功；尚未执行完整五折，尚无新模型成绩，也未提交 Kaggle。** 对五折的反复研发仍是探索性选择，不属于独立外部测试。
+- 课程 AI 使用限制：辅助构思、代码检查及调试需披露；组员必须自行理解并审查实现。不可将 AI 输出未经审查地当作作业最终答案。
