@@ -46,12 +46,15 @@ class ArchitectureModel(ProteinModel):
     def __init__(self, variant):
         self.variant = variant
 
-    def fit(self, rows, features, protein_values, epochs=200):
-        if self.variant in ('residual', 'split'):
+    def fit(self, rows, features, protein_values, epochs=200, base_epochs=100):
+        if self.variant in ('residual', 'residual_two_stage', 'split'):
             original = direct.ProteinNetwork
-            direct.ProteinNetwork = {'residual': ResidualNetwork, 'split': SplitNetwork}[self.variant]
+            direct.ProteinNetwork = {'residual': ResidualNetwork, 'residual_two_stage': ResidualNetwork, 'split': SplitNetwork}[self.variant]
             try:
-                super().fit(rows, features, protein_values, epochs)
+                if self.variant == 'residual_two_stage':
+                    super().fit(rows, features, protein_values, epochs, training_mode='two_stage', base_epochs=base_epochs)
+                else:
+                    super().fit(rows, features, protein_values, epochs)
             finally:
                 direct.ProteinNetwork = original
             return self
